@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101d36">
+<meta name="description" content="FE QUIZ: plataforma educativa de desafios e conhecimentos gerais para aprender, competir e evoluir.">
+<title>FE QUIZ | Aprenda, desafie-se e evolua</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="nav">
+  <button data-go="home">Início</button>
+  <button data-go="rank">Ranking</button>
+  <button data-go="result">Resultados</button>
+</nav>
+
+<section id="home" class="screen active center">
+  <p class="eyebrow">PLATAFORMA DE APRENDIZAGEM</p>
+  <h1>FE <span>QUIZ</span></h1>
+  <h2 class="home-heading">Conhecimento em movimento.</h2>
+  <p class="sub">Teste seus conhecimentos. Aprenda. Compita. Conquiste pontos.</p>
+  <blockquote>Desafie seus conhecimentos. Evolua a cada resposta.</blockquote>
+  <p class="muted">Uma experiência de conhecimentos gerais com perguntas de 15 categorias, pontuação por desempenho e classificação acumulada.</p>
+  <div class="home-pitch">
+    <strong>EDUCAÇÃO QUE VIRA DESAFIO</strong>
+    <p>Uma ferramenta interativa para escolas e professores estimularem a revisão de conteúdos, a participação e a aprendizagem por meio de quizzes.</p>
+  </div>
+  <div class="home-facts"><span><b>30</b> perguntas</span><span><b>15</b> categorias</span><span><b>30s</b> por questão</span></div>
+  <button class="btn big gold" id="btnStart">COMEÇAR QUIZ</button>
+  <button class="btn ghost" id="btnContinue" hidden>Continuar partida em andamento</button>
+</section>
+
+<section id="setup" class="screen center">
+  <p class="eyebrow">NOVA EXPERIÊNCIA</p>
+  <h2>Configuração da partida</h2>
+  <div class="card form">
+    <label>PARTICIPANTE<input id="n1" list="plist" placeholder="Nome" autocomplete="off"></label>
+    <label>Série<select id="grade"></select></label>
+    <datalist id="plist"></datalist>
+    <div class="selection-info"><span class="selection-number">30</span><div><b>Partida completa</b><span id="categoryInfo">15 categorias · 2 perguntas de cada categoria</span></div></div>
+    <p class="rules">30 segundos por pergunta. Acertos valem até <b>3 pontos</b>: até 10s = 3 pts · até 20s = 2 pts · até 30s = 1 pt. Erros e tempo esgotado valem 0.<br>Depois de iniciar, a partida fica em andamento até a conclusão.</p>
+    <p class="err" id="setupErr"></p>
+    <button class="btn big gold" id="btnGo">INICIAR QUIZ</button>
+  </div>
+</section>
+
+<section id="quiz" class="screen">
+  <div class="scoreboard">
+    <div class="player on" id="pl1"></div>
+    <div class="stats" id="stats"></div>
+  </div>
+  <div class="turn" id="turn"></div>
+  <div class="card qcard">
+    <div class="bar" role="progressbar" aria-label="Progresso da partida" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0"><i id="barFill"></i></div>
+    <div class="meta"><span id="qnum"></span><span id="timer" class="timer" hidden></span><span id="qcat" class="chip"></span></div>
+    <h2 id="qtext"></h2>
+    <div class="opts" id="opts"></div>
+    <div id="endBox" hidden>
+      <h3>🏁 PARTIDA FINALIZADA</h3>
+      <p id="endSummary"></p>
+      <div class="row">
+        <button class="btn green" id="eRank">VER RANKING</button>
+        <button class="btn blue" id="eRes">VER RESULTADO</button>
+        <button class="btn gold" id="eNew">NOVA PARTIDA</button>
+      </div>
+    </div>
+    <p class="hint" id="hint">Toque em uma alternativa (ou use as teclas A, B, C, D) · quanto mais rápido, mais pontos</p>
+    <div id="after" hidden>
+      <h3 id="feedback"></h3>
+      <h3 class="ok">RESPOSTA CORRETA: <span id="right"></span></h3>
+      <div class="learn-card" aria-live="polite">
+        <strong>PARA APRENDER</strong>
+        <p id="learnMore"></p>
+      </div>
+      <button class="btn big gold" id="btnNext">PRÓXIMA PERGUNTA →</button>
+    </div>
+  </div>
+</section>
+
+<section id="rank" class="screen center">
+  <p class="eyebrow">CLASSIFICAÇÃO ACUMULADA</p>
+  <h2>Ranking do evento</h2>
+  <p class="muted">A classificação é compartilhada online entre os dispositivos conectados. Os resultados são sincronizados com o banco de dados do FE QUIZ.</p>
+  <div class="card">
+    <select id="rankFilter" class="filter" aria-label="Filtrar por série"></select>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Posição</th><th>Participante</th><th>Série</th><th>Pontos</th></tr></thead>
+      <tbody id="rankBody"></tbody>
+    </table></div>
+    <p class="muted" id="cloudStatus" role="status">Conectando ao ranking online...</p>
+    <p class="muted rank-readonly">Ranking público: somente administradores autorizados podem alterar pontuações.</p>
+  </div>
+</section>
+
+<section id="result" class="screen center">
+  <p class="eyebrow">DESEMPENHO GERAL</p>
+  <h1>Resultado do evento</h1>
+  <div class="card winner">
+    <p class="muted">MAIOR PONTUAÇÃO</p>
+    <h2 id="winName"></h2>
+    <p class="muted">Pontuação total</p>
+    <div class="big-score" id="winPts"></div>
+    <blockquote>“Parabéns! Você alcançou a maior pontuação do evento.”</blockquote>
+  </div>
+  <div class="card latest-match" id="latestMatch" hidden>
+    <p class="section-kicker">ÚLTIMA PARTIDA CONCLUÍDA</p>
+    <h3 id="latestName"></h3>
+    <div class="latest-stats"><strong id="latestPoints"></strong><span id="latestHits"></span><span id="latestMisses"></span><span id="latestPercent"></span></div>
+  </div>
+  <div class="card" id="byGradeCard">
+    <h3>Líder de cada série</h3>
+    <div id="byGrade"></div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-client.js"></script>
+<script src="questions.js"></script>
+<script src="questions-series.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
