@@ -487,6 +487,24 @@ async function startMatch() {
     return;
   }
 
+  // A regra de uma única partida é validada no Supabase antes de iniciar.
+  // Sem a verificação online, não é possível garantir que o participante não jogou em outro dispositivo.
+  try {
+    if (!window.FEQuizCloud?.enabled || typeof window.FEQuizCloud.canPlay !== "function") {
+      throw new Error("Não foi possível verificar a participação. Conecte o FE QUIZ ao ranking online e tente novamente.");
+    }
+    await window.FEQuizCloud.ready;
+    const canPlay = await window.FEQuizCloud.canPlay(n1, grade);
+    if (!canPlay) {
+      $("#setupErr").textContent = "Este participante já realizou uma partida. Cada participante pode jogar apenas uma vez.";
+      return;
+    }
+  } catch (error) {
+    console.error("Falha ao verificar participação:", error);
+    $("#setupErr").textContent = error.message || "Não foi possível verificar se este participante já jogou. Tente novamente.";
+    return;
+  }
+
   if (typeof questions === "undefined" || !Array.isArray(questions)) {
     $("#setupErr").textContent = "O banco de perguntas não foi carregado.";
     console.error("questions.js não foi carregado corretamente.");
