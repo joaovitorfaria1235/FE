@@ -61,6 +61,15 @@
       }
       return false;
     },
+    // Pergunta ao banco se este nome + série ainda pode jogar (regra de participação única).
+    async canPlay(name, grade) {
+      const { data, error } = await client.rpc('fequiz_can_play', { p_name: name, p_grade: grade });
+      if (error) {
+        console.error('Falha em fequiz_can_play:', error);
+        throw new Error('Não foi possível verificar a participação. Verifique a conexão e tente novamente.');
+      }
+      return data === true;
+    },
     async submit(result) {
       try {
         const { error } = await client.rpc('fequiz_submit_result', {
@@ -78,6 +87,8 @@
         return true;
       } catch (e) {
         console.error('Falha ao salvar partida online:', e);
+        // Se o banco recusou por participação repetida, volta a exibir o ranking real do servidor.
+        if (String(e?.message || '').includes('já participou')) await api.refresh();
         status('Partida concluída, mas não foi sincronizada. Verifique a configuração do Supabase.', true);
         return false;
       }
