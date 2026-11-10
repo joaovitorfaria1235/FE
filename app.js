@@ -94,7 +94,11 @@ let S = (() => {
   }
 })();
 
-window.FEQuizSetParticipants = (participants) => { S.participants = participants; save(); if (document.getElementById("rank")?.classList.contains("active")) renderRank(); };
+window.FEQuizSetParticipants = (participants) => {
+  /* Mantém o participante da partida em andamento (ainda não está no banco). */
+  const current = S.match ? S.participants.find((p) => p.id === S.match.a) : null;
+  S.participants = current && !participants.some((p) => p.id === current.id) ? participants.concat(current) : participants;
+  save(); if (document.getElementById("rank")?.classList.contains("active")) renderRank(); };
 
 /*
  * Salvar estado.
@@ -472,7 +476,19 @@ function renderSetup() {
  * =========================
  */
 
+let starting = false;
+
 async function startMatch() {
+  if (starting) return;
+  starting = true;
+  try {
+    await startMatchChecked();
+  } finally {
+    starting = false;
+  }
+}
+
+async function startMatchChecked() {
   const n1 = $("#n1")?.value.trim() || "";
 
   if (!n1) {
@@ -496,7 +512,7 @@ async function startMatch() {
     await window.FEQuizCloud.ready;
     const canPlay = await window.FEQuizCloud.canPlay(n1, grade);
     if (!canPlay) {
-      $("#setupErr").textContent = "Este participante já realizou uma partida. Cada participante pode jogar apenas uma vez.";
+      $("#setupErr").textContent = "Você já participou! Cada aluno pode jogar apenas uma vez.";
       return;
     }
   } catch (error) {
@@ -551,6 +567,8 @@ async function startMatch() {
   S.match = {
     matchId: makeMatchId(),
     a: a.id,
+    pname: a.name,
+    pgrade: a.grade,
     sa: 0,
     cat: "Todas",
     queue: selectedQuestions.map((q) => q.id),
@@ -601,7 +619,14 @@ function renderQuiz() {
     return;
   }
 
-  const pa = P(m.a);
+  let pa = P(m.a);
+
+  /* Recria o participante local se o ranking online o tiver substituído durante a partida. */
+  if (!pa && m.pname && m.pgrade) {
+    pa = findOrCreate(m.pname, m.pgrade);
+    m.a = pa.id;
+    save();
+  }
 
   if (!pa) {
     S.match = null;
@@ -858,11 +883,10 @@ function next(force) {
 }
 
 async function syncCompletedMatch(m) {
-  if (!m || m.submitted || !window.FEQuizCloud?.enabled) return;
-  m.submitted = true;
-  save();
+  if (!m || m.submitted || m.submitting || !window.FEQuizCloud?.enabled) return;
+  m.submitting = true;
   const participant = P(m.a);
-  if (!participant) return;
+  if (!participant) { m.submitting = false; return; }
   const stats = calc(m);
   const started = Number(m.startedAt || Date.now());
   const result = await window.FEQuizCloud.submit({
@@ -871,7 +895,8 @@ async function syncCompletedMatch(m) {
     hits: stats.hits, misses: stats.miss,
     durationSeconds: Math.max(0, Math.round((Date.now() - started) / 1000))
   });
-  if (!result) { m.submitted = false; save(); }
+  m.submitting = false;
+  if (result) { m.submitted = true; save(); }
 }
 
 /*
